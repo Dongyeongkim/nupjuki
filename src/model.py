@@ -19,13 +19,15 @@ class ResBlock(nn.Module):
     def forward(self, x):
         pass 
 
-# Component of StateTransition Model - Actor
+# Component of StateTransition Model - PolicyNet
 
 class Policy(nn.Module):
     def __init__(self, ):
         pass
     def forward(self, x):
         pass
+
+# Component of StateTransition Model - ValueNet
 
 class Value(nn.Module):
     def __init__(self, ):
