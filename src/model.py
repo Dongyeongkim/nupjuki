@@ -43,7 +43,23 @@ class Value(nn.Module):
 
 class StateTransitionModel(nn.Module):
     def __init__(self):
-        pass 
+        self.block1 = ResBlock(channels_first=1, channels_input=48, channels_last=192, kernel_size=5)
+        self.block2 = ResBlock(channels_first=48, channels_input=192, channels_last=192, kernel_size=3)
+        self.block3 = ResBlock(channels_first=192, channels_input=192, channels_last=192, kernel_size=3)
+        self.block4 = ResBlock(channels_first=192, channels_input=192, channels_last=192, kernel_size=3)
+        self.block5 = ResBlock(channels_first=192, channels_input=192, channels_last=192, kernel_size=3)
+        self.policyhead = Policy()
+        self.valuehead = Value()
     
     def forward(self, x):
-        pass
+        x = self.block1(x)
+        x = self.block2(x)
+        x = self.block3(x)
+        x = self.block4(x)
+        x = self.block5(x)
+        policy = self.policyhead(x)
+        value = self.valuehead(policy)
+        
+        return policy, value
+
+        
