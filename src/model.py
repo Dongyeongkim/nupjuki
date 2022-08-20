@@ -37,7 +37,7 @@ class ResBlock(nn.Module):
         return x
 
 
-# Component of StateTransition Model - PolicyNet
+# Component of StateTransition Model - PolicyNet (Position)
 
 class Policy(nn.Module):
     def __init__(self, input_channels):
@@ -46,16 +46,32 @@ class Policy(nn.Module):
     def forward(self, x):
         return self.policynet(x)
 
+# Component of StateTransition Model - PolicyNet (Action type)
+
+class PolicyType(nn.Module):
+    def __init__(self, input_channels, feature_num):
+        super(PolicyType, self).__init__()
+        self.policyinput = nn.Conv2d(in_channels=input_channels, out_channels=1, kernel_size=1)
+        self.policyflatten = nn.Flatten()
+        self.policyact = nn.Linear(in_features=feature_num,out_features=4)
+        self.regularizer = nn.Softmax()
+    
+    def forward(self, x):
+        x = self.policyinput(x)
+        x = self.policyflatten(x)
+        x = self.policyact(x)
+        x = self.regularizer(x)
+        return x
+
+
 # Component of StateTransition Model - ValueNet
 
 class Value(nn.Module):
     def __init__(self, feature_num):
         super(Value, self).__init__()
-        self.flatpol = nn.Flatten()
         self.lin = nn.Linear(in_features=feature_num, out_features=1)
         self.valuenet = nn.Tanh()
     def forward(self, x):
-        x = self.flatpol(x)
         return self.valuenet(self.lin(x))
 
 
@@ -69,7 +85,10 @@ class StateTransitionModel(nn.Module):
         self.block3 = ResBlock(channels_first=192, channels_input=192, channels_last=192, kernel_size=3, padding=1)
         self.block4 = ResBlock(channels_first=192, channels_input=192, channels_last=192, kernel_size=3, padding=1)
         self.policyhead = Policy(input_channels=192)
-        self.valuehead = Value(feature_num=81) # 9*9
+        self.policyact = PolicyType(input_channels=192, feature_num=81)
+        self.valuehead = Value(feature_num=85) # 9*9 + 4
+        self.flatpol = nn.Flatten()
+        
     
     def forward(self, x):
         x = self.resinput(x)
@@ -77,10 +96,14 @@ class StateTransitionModel(nn.Module):
         x = self.block2(x)
         x = self.block3(x)
         x = self.block4(x)
-        policy = self.policyhead(x)
+        policypoint = self.policyhead(x)
+        policytype = self.policyact(x)
+        flatpolicy = self.flatpol(policypoint)
+        policy = torch.cat((flatpolicy, policytype), dim=1)
+
         value = self.valuehead(policy)
         
-        return policy, value
+        return policypoint, policytype, value
 
 
 if __name__ == "__main__":
@@ -92,5 +115,6 @@ if __name__ == "__main__":
         model = StateTransitionModel()
         input = torch.randn(1,1,9,9)
     
-    policy, value = model(input)
-    print(policy, value)
+    policypoint, policytype, value = model(input)
+    print(policypoint, policytype, value)
+    print(policypoint.size(), policytype.size(), value.size())
