@@ -8,7 +8,7 @@ import torch.nn as nn
 class ResInput(nn.Module):
     def __init__(self):
         super(ResInput, self).__init__()
-        self.resinput = nn.Conv2d(in_channels=1, out_channels=48, kernel_size=1)
+        self.resinput = nn.Conv2d(in_channels=4, out_channels=48, kernel_size=1)
         self.actfunc = nn.ELU()
         self.firstconv = nn.Conv2d(in_channels=48, out_channels=192, kernel_size=5, padding=2)
     def forward(self, x):
@@ -110,10 +110,10 @@ if __name__ == "__main__":
     
     if torch.cuda.is_available():
         model = StateTransitionModel().cuda()
-        input = torch.randn(1,1,9,9).cuda()
+        input = torch.randn(1,4,9,9).cuda()
     else:
         model = StateTransitionModel()
-        input = torch.randn(1,1,9,9)
+        input = torch.randn(1,4,9,9)
     
     policypoint, policytype, value = model(input)
     print(policypoint, policytype, value)
